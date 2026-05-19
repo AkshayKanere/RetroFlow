@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSocket } from '../context/SocketContext';
 import { useRetro } from '../context/RetroContext';
 import Header from './Header';
@@ -25,6 +26,7 @@ const styles = {
 export default function Board() {
   const socket = useSocket();
   const { state, dispatch } = useRetro();
+  const navigate = useNavigate();
 
   useEffect(() => {
     function onCardAdded({ card }) {
@@ -51,6 +53,10 @@ export default function Board() {
     function onSummaryGenerated({ summary }) {
       dispatch({ type: 'SUMMARY_GENERATED', payload: summary });
     }
+    function onRetroEnded({ retro }) {
+      dispatch({ type: 'RETRO_ENDED', payload: retro });
+      navigate('/retro/' + state.retro?.share_code + '/summary');
+    }
 
     socket.on('card-added', onCardAdded);
     socket.on('vote-updated', onVoteUpdated);
@@ -59,6 +65,7 @@ export default function Board() {
     socket.on('participant-joined', onParticipantJoined);
     socket.on('participant-left', onParticipantLeft);
     socket.on('summary-generated', onSummaryGenerated);
+    socket.on('retro-ended', onRetroEnded);
 
     return () => {
       socket.off('card-added', onCardAdded);
@@ -68,8 +75,9 @@ export default function Board() {
       socket.off('participant-joined', onParticipantJoined);
       socket.off('participant-left', onParticipantLeft);
       socket.off('summary-generated', onSummaryGenerated);
+      socket.off('retro-ended', onRetroEnded);
     };
-  }, [socket, dispatch]);
+  }, [socket, dispatch, navigate, state.retro?.share_code]);
 
   if (!state.retro) {
     return (
@@ -88,7 +96,7 @@ export default function Board() {
         <Column column="didnt" />
         <Column column="action" />
       </div>
-      {state.retro.phase === 'discussion' && <Summary />}
+      {state.cards.length > 0 && <Summary />}
     </div>
   );
 }

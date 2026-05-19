@@ -41,7 +41,7 @@ export default function Summary() {
         <div style={bodyStyle}>
           {state.summary
             ? state.summary
-            : 'Click "Generate Summary" to create an AI-powered summary of this retrospective.'}
+            : 'Summary will be generated automatically as cards are added...'}
         </div>
       )}
     </div>

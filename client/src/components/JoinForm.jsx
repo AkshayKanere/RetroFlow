@@ -77,7 +77,7 @@ export default function JoinForm() {
     }
     setLoading(true);
     setError('');
-    socket.emit('join-retro', { shareCode, displayName: displayName.trim() }, (response) => {
+    socket.emit('join-retro', { shareCode, displayName: displayName.trim(), facilitatorToken: sessionStorage.getItem('facilitatorToken') || null }, (response) => {
       setLoading(false);
       if (response.error) {
         setError(response.error);

@@ -86,7 +86,7 @@ export default function Header() {
         <span style={titleStyle}>{retro?.title}</span>
       </div>
       <div style={infoStyle}>
-        <span>{participants.length} participant{participants.length !== 1 ? 's' : ''}</span>
+        <span>{participants.length}/{retro?.max_participants || '?'} participants</span>
         <span style={phaseStyle}>{PHASE_LABELS[phase] || phase}</span>
         {phase === 'voting' && (
           <span>Votes left: {3 - myVotes.length}</span>
@@ -114,6 +114,18 @@ export default function Header() {
         {isFacilitator && phase === 'discussion' && (
           <button style={btnStyle} onClick={generateSummary}>
             Generate Summary
+          </button>
+        )}
+        {isFacilitator && (
+          <button
+            style={{ ...btnStyle, background: 'var(--color-didnt)' }}
+            onClick={() => {
+              if (window.confirm('End this retrospective? This cannot be undone.')) {
+                socket.emit('end-retro', {});
+              }
+            }}
+          >
+            End Retrospective
           </button>
         )}
       </div>
