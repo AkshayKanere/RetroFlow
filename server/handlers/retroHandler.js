@@ -1,17 +1,23 @@
-import { createRetro, getRetroByShareCode, addParticipant, getParticipants, getCards, getVotesForRetro } from '../db.js';
+import { createRetro, getRetroByShareCode, addParticipant, getParticipants, getCards, getVotesForRetro, getActiveRetro } from '../db.js';
 
-export function handleCreateRetro(db, { title, addPointsDuration, votingDuration }) {
-  const retro = createRetro(db, { title, addPointsDuration, votingDuration });
+export function handleCreateRetro(db, { title, addPointsDuration, votingDuration, maxParticipants }) {
+  const active = getActiveRetro(db);
+  if (active) {
+    return { error: 'An active retro already exists' };
+  }
+  const retro = createRetro(db, { title, addPointsDuration, votingDuration, maxParticipants });
   return { retro };
 }
 
-export function handleJoinRetro(db, { shareCode, displayName, socketId }) {
+export function handleJoinRetro(db, { shareCode, displayName, socketId, isFacilitator = false }) {
   const retro = getRetroByShareCode(db, shareCode);
   if (!retro) {
     return { error: 'Retro not found' };
   }
   const existingParticipants = getParticipants(db, retro.id);
-  const isFacilitator = existingParticipants.length === 0;
+  if (existingParticipants.length >= retro.max_participants) {
+    return { error: 'Retro is full. Maximum participants reached.' };
+  }
   const participant = addParticipant(db, {
     retroId: retro.id,
     displayName,
