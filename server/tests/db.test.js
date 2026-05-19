@@ -20,6 +20,9 @@ import {
   getVotesByParticipant,
   getVotesForRetro,
   saveSummary,
+  getActiveRetro,
+  getAllRetros,
+  getSummaryForRetro,
 } from "../db.js";
 
 let db;
@@ -205,5 +208,58 @@ describe("Summaries", () => {
     expect(summary.text).toBe("Great retro!");
     expect(summary.retro_id).toBe(retro.id);
     expect(summary.id).toBeDefined();
+  });
+});
+
+describe("Active retro", () => {
+  it("should return the active retro (phase != ended)", () => {
+    const r1 = createRetro(db, { title: "Ended" });
+    updateRetroPhase(db, r1.id, "ended");
+    const r2 = createRetro(db, { title: "Active" });
+    const active = getActiveRetro(db);
+    expect(active.id).toBe(r2.id);
+  });
+
+  it("should return undefined when no active retro", () => {
+    const r = createRetro(db, { title: "Done" });
+    updateRetroPhase(db, r.id, "ended");
+    expect(getActiveRetro(db)).toBeUndefined();
+  });
+});
+
+describe("getAllRetros", () => {
+  it("should return all retros ordered by created_at desc", () => {
+    createRetro(db, { title: "First" });
+    createRetro(db, { title: "Second" });
+    const all = getAllRetros(db);
+    expect(all.length).toBe(2);
+    expect(all[0].title).toBe("Second");
+  });
+});
+
+describe("getSummaryForRetro", () => {
+  it("should return the latest summary for a retro", () => {
+    const r = createRetro(db, { title: "Sum Test" });
+    saveSummary(db, { retroId: r.id, text: "Old" });
+    saveSummary(db, { retroId: r.id, text: "New" });
+    const s = getSummaryForRetro(db, r.id);
+    expect(s.text).toBe("New");
+  });
+
+  it("should return undefined if no summary", () => {
+    const r = createRetro(db, { title: "No Sum" });
+    expect(getSummaryForRetro(db, r.id)).toBeUndefined();
+  });
+});
+
+describe("Max participants", () => {
+  it("should store max_participants on retro", () => {
+    const r = createRetro(db, { title: "Max", maxParticipants: 5 });
+    expect(r.max_participants).toBe(5);
+  });
+
+  it("should default max_participants to 10", () => {
+    const r = createRetro(db, { title: "Default Max" });
+    expect(r.max_participants).toBe(10);
   });
 });

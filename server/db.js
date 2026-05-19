@@ -57,6 +57,7 @@ export function createSchema(db) {
       share_code TEXT UNIQUE NOT NULL,
       add_points_duration INTEGER NOT NULL DEFAULT 300,
       voting_duration INTEGER NOT NULL DEFAULT 120,
+      max_participants INTEGER NOT NULL DEFAULT 10,
       phase TEXT NOT NULL DEFAULT 'lobby',
       phase_ends_at TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -112,12 +113,12 @@ function generateShareCode() {
   return uuidv4().slice(0, 8).toUpperCase();
 }
 
-export function createRetro(db, { title, addPointsDuration = 300, votingDuration = 120 }) {
+export function createRetro(db, { title, addPointsDuration = 300, votingDuration = 120, maxParticipants = 10 }) {
   const id = uuidv4();
   const shareCode = generateShareCode();
   db.prepare(
-    `INSERT INTO retros (id, title, share_code, add_points_duration, voting_duration) VALUES (?, ?, ?, ?, ?)`
-  ).run(id, title, shareCode, addPointsDuration, votingDuration);
+    'INSERT INTO retros (id, title, share_code, add_points_duration, voting_duration, max_participants) VALUES (?, ?, ?, ?, ?, ?)'
+  ).run(id, title, shareCode, addPointsDuration, votingDuration, maxParticipants);
   return getRetro(db, id);
 }
 
@@ -214,4 +215,16 @@ export function saveSummary(db, { retroId, text }) {
     `INSERT INTO summaries (id, retro_id, text) VALUES (?, ?, ?)`
   ).run(id, retroId, text);
   return db.prepare(`SELECT * FROM summaries WHERE id = ?`).get(id);
+}
+
+export function getActiveRetro(db) {
+  return db.prepare("SELECT * FROM retros WHERE phase != 'ended' ORDER BY created_at DESC, rowid DESC LIMIT 1").get();
+}
+
+export function getAllRetros(db) {
+  return db.prepare('SELECT * FROM retros ORDER BY created_at DESC, rowid DESC').all();
+}
+
+export function getSummaryForRetro(db, retroId) {
+  return db.prepare('SELECT * FROM summaries WHERE retro_id = ? ORDER BY created_at DESC, rowid DESC LIMIT 1').get(retroId);
 }
