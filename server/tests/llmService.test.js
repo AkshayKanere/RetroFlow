@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildPrompt, parseSummary } from '../services/llmService.js';
+import { buildPrompt, parseSummary, buildDetailedSummaryPrompt } from '../services/llmService.js';
 
 describe('buildPrompt', () => {
   it('builds correct prompt from cards and votes', () => {
@@ -54,5 +54,25 @@ describe('parseSummary', () => {
   it('trims whitespace from response text', () => {
     expect(parseSummary('  hello world  ')).toBe('hello world');
     expect(parseSummary('\n\nsome summary\n\n')).toBe('some summary');
+  });
+});
+
+describe('buildDetailedSummaryPrompt', () => {
+  it('builds a detailed analysis prompt', () => {
+    const cards = [
+      { id: '1', column: 'well', text: 'Great teamwork', group_id: null },
+      { id: '2', column: 'didnt', text: 'Too many meetings', group_id: null },
+      { id: '3', column: 'action', text: 'Reduce meeting time', group_id: null },
+    ];
+    const votes = [{ card_id: '1' }, { card_id: '1' }, { card_id: '2' }];
+    const title = 'Sprint 42 Retro';
+
+    const prompt = buildDetailedSummaryPrompt(cards, votes, title);
+
+    expect(prompt).toContain('Sprint 42 Retro');
+    expect(prompt).toContain('Overview');
+    expect(prompt).toContain('Key Themes');
+    expect(prompt).toContain('Action Items');
+    expect(prompt).toContain('Great teamwork (2 votes)');
   });
 });
