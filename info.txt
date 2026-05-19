@@ -1,0 +1,6 @@
+features required
+
+1. voting - only 3 votes per person
+2. Duplicate points grouping 
+
+summary of overall points in 2 sentences by LLM
