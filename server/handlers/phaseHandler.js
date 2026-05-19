@@ -48,3 +48,8 @@ export function handleEndPhase(db, { retroId }) {
 export function handleTimerExpired(db, { retroId }) {
   return handleEndPhase(db, { retroId });
 }
+
+export function handleEndRetro(db, { retroId }) {
+  const updated = updateRetroPhase(db, retroId, 'ended', null);
+  return { retro: updated };
+}

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { initDb, createRetro, updateRetroPhase } from '../db.js';
-import { handleStartPhase, handleEndPhase, handleTimerExpired } from '../handlers/phaseHandler.js';
+import { handleStartPhase, handleEndPhase, handleTimerExpired, handleEndRetro } from '../handlers/phaseHandler.js';
 
 describe('phaseHandler', () => {
   let db;
@@ -91,5 +91,16 @@ describe('phaseHandler', () => {
   it('should return error when ending lobby phase', () => {
     const result = handleEndPhase(db, { retroId: retro.id });
     expect(result.error).toBe('Cannot end phase lobby');
+  });
+
+  it('should end retro from discussion phase', () => {
+    updateRetroPhase(db, retro.id, 'discussion', null);
+    const result = handleEndRetro(db, { retroId: retro.id });
+    expect(result.retro.phase).toBe('ended');
+  });
+
+  it('should end retro from any phase', () => {
+    const result = handleEndRetro(db, { retroId: retro.id });
+    expect(result.retro.phase).toBe('ended');
   });
 });
