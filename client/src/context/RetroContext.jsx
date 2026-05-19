@@ -96,6 +96,11 @@ function retroReducer(state, action) {
       };
     case 'SUMMARY_GENERATED':
       return { ...state, summary: action.payload };
+    case 'RETRO_ENDED':
+      return {
+        ...state,
+        retro: { ...state.retro, phase: 'ended' },
+      };
     default:
       return state;
   }

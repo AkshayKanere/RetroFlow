@@ -65,8 +65,11 @@ export default function CreateRetro() {
   const [title, setTitle] = useState('');
   const [addMinutes, setAddMinutes] = useState(10);
   const [voteMinutes, setVoteMinutes] = useState(10);
+  const [maxParticipants, setMaxParticipants] = useState(10);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [shareLink, setShareLink] = useState('');
+  const [copied, setCopied] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -79,11 +82,15 @@ export default function CreateRetro() {
     try {
       const res = await fetch('/api/retros', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + sessionStorage.getItem('facilitatorToken'),
+        },
         body: JSON.stringify({
           title: title.trim(),
           addPointsDuration: Number(addMinutes) * 60,
           votingDuration: Number(voteMinutes) * 60,
+          maxParticipants: Number(maxParticipants),
         }),
       });
       const data = await res.json();
@@ -91,12 +98,56 @@ export default function CreateRetro() {
         setError(data.error || 'Failed to create retro');
         return;
       }
-      navigate(`/retro/${data.retro.share_code}`);
+      const link = `${window.location.origin}/retro/${data.retro.share_code}`;
+      setShareLink(link);
     } catch {
       setError('Network error');
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleCopy() {
+    navigator.clipboard.writeText(shareLink).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  function handleJoin() {
+    const code = shareLink.split('/retro/')[1];
+    navigate(`/retro/${code}`);
+  }
+
+  if (shareLink) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.form}>
+          <div style={styles.title}>Retro Created!</div>
+          <div style={{ color: 'var(--text-secondary)', fontSize: 14, textAlign: 'center' }}>
+            Share this link with your team:
+          </div>
+          <div style={{
+            background: 'var(--bg-primary)',
+            border: '1px solid var(--border)',
+            borderRadius: 6,
+            padding: '12px 14px',
+            color: 'var(--color-well)',
+            fontSize: 13,
+            wordBreak: 'break-all',
+            textAlign: 'center',
+          }}>
+            {shareLink}
+          </div>
+          <button style={{ ...styles.button, background: 'var(--color-action)' }} onClick={handleCopy}>
+            {copied ? 'Copied!' : 'Copy Link'}
+          </button>
+          <button style={styles.button} onClick={handleJoin}>
+            Join Retro
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -130,6 +181,16 @@ export default function CreateRetro() {
             min={1}
             value={voteMinutes}
             onChange={(e) => setVoteMinutes(e.target.value)}
+          />
+        </div>
+        <div>
+          <label style={styles.label}>Max Participants</label>
+          <input
+            style={styles.input}
+            type="number"
+            min={2}
+            value={maxParticipants}
+            onChange={(e) => setMaxParticipants(e.target.value)}
           />
         </div>
         {error && <div style={styles.error}>{error}</div>}
