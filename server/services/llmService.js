@@ -10,6 +10,26 @@ export function isLlmConfigured() {
   return !!(process.env.LLM_GATEWAY_URL && process.env.LLM_API_KEY);
 }
 
+function buildLlmHeaders() {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${process.env.LLM_API_KEY}`,
+    'user-agent': process.env.LLM_USER_AGENT || 'RetroFlow/1.0.0',
+  };
+  const extra = process.env.LLM_EXTRA_HEADERS;
+  if (extra) {
+    try {
+      const parsed = JSON.parse(extra);
+      Object.assign(headers, parsed);
+    } catch (err) {
+      log.warn('Failed to parse LLM_EXTRA_HEADERS:', err.message);
+    }
+  }
+  return headers;
+}
+
+export { buildLlmHeaders };
+
 export function buildPrompt(cards, votes, participants = []) {
   const parentCards = cards.filter(c => !c.group_id);
   const voteCounts = {};
@@ -49,16 +69,11 @@ export async function generateSummary(cards, votes, participants = []) {
   const prompt = buildPrompt(cards, votes, participants);
   log.debug('generateSummary: calling LLM, prompt length:', prompt.length);
   const gatewayUrl = process.env.LLM_GATEWAY_URL;
-  const apiKey = process.env.LLM_API_KEY;
 
   const model = process.env.LLM_MODEL || 'quick-thinking';
   const response = await fetch(gatewayUrl, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-      'user-agent': process.env.LLM_USER_AGENT || 'RetroFlow/1.0.0',
-    },
+    headers: buildLlmHeaders(),
     body: JSON.stringify({
       model,
       messages: [{ role: 'user', content: prompt }],
@@ -83,16 +98,11 @@ async function callLLM(prompt) {
   }
   log.debug('callLLM: calling LLM, prompt length:', prompt.length);
   const gatewayUrl = process.env.LLM_GATEWAY_URL;
-  const apiKey = process.env.LLM_API_KEY;
 
   const model = process.env.LLM_MODEL || 'quick-thinking';
   const response = await fetch(gatewayUrl, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-      'user-agent': process.env.LLM_USER_AGENT || 'RetroFlow/1.0.0',
-    },
+    headers: buildLlmHeaders(),
     body: JSON.stringify({
       model,
       messages: [{ role: 'user', content: prompt }],

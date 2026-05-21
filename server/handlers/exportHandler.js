@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx';
 import { getRetro, getCards, getParticipants, getVotesForRetro, getSummaryForRetro } from '../db.js';
-import { buildDetailedSummaryPrompt, isLlmConfigured } from '../services/llmService.js';
+import { buildDetailedSummaryPrompt, isLlmConfigured, buildLlmHeaders } from '../services/llmService.js';
 import * as log from '../services/logger.js';
 
 export function buildExcelBuffer(db, retroId) {
@@ -92,15 +92,10 @@ export async function buildDetailedSummaryMd(db, retroId) {
   }
 
   const gatewayUrl = process.env.LLM_GATEWAY_URL;
-  const apiKey = process.env.LLM_API_KEY;
   const model = process.env.LLM_MODEL || 'quick-thinking';
   const response = await fetch(gatewayUrl, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + apiKey,
-      'user-agent': process.env.LLM_USER_AGENT || 'RetroFlow/1.0.0',
-    },
+    headers: buildLlmHeaders(),
     body: JSON.stringify({
       model,
       messages: [{ role: 'user', content: prompt }],
