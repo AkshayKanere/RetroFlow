@@ -8,7 +8,7 @@ import { handleCreateRetro, handleJoinRetro, getRetroState } from './handlers/re
 import { handleAddCard, handleGroupCards, handleUngroupCard } from './handlers/cardHandler.js';
 import { handleVote, handleUnvote } from './handlers/voteHandler.js';
 import { handleStartPhase, handleEndPhase, handleTimerExpired, handleEndRetro } from './handlers/phaseHandler.js';
-import { generateSummary, generateSectionSummary, rephraseText, suggestGroupings, generateActionItems } from './services/llmService.js';
+import { generateSummary, generateSectionSummary, rephraseText, suggestGroupings, generateActionItems, isLlmConfigured } from './services/llmService.js';
 import { validateFacilitatorPassword, verifyFacilitatorToken } from './handlers/facilitatorHandler.js';
 import { buildExcelBuffer, buildDetailedSummaryMd } from './handlers/exportHandler.js';
 import * as log from './services/logger.js';
@@ -80,10 +80,11 @@ async function main() {
       const cards = getCards(db, retroId);
       if (cards.length === 0) return;
       if (!process.env.LLM_GATEWAY_URL || !process.env.LLM_API_KEY) return;
-      log.info('Auto-generating summary for retro', retroId);
       const votes = getVotesForRetro(db, retroId);
       const participants = getParticipants(db, retroId);
       const text = await generateSummary(cards, votes, participants);
+      if (!text) return;
+      log.info('Auto-generating summary for retro', retroId);
       const summary = saveSummary(db, { retroId, text });
       io.to(retroId).emit('summary-generated', { summary: summary.text });
       log.info('Auto-summary generated for retro', retroId);
@@ -183,6 +184,7 @@ async function main() {
   });
 
   app.post('/api/rephrase', async (req, res) => {
+    if (!isLlmConfigured()) return res.status(503).json({ error: 'AI features are not configured' });
     try {
       const { text } = req.body;
       if (!text || typeof text !== 'string' || !text.trim()) {
@@ -197,6 +199,7 @@ async function main() {
   });
 
   app.post('/api/retros/:id/section-summary', async (req, res) => {
+    if (!isLlmConfigured()) return res.status(503).json({ error: 'AI features are not configured' });
     try {
       const retro = getRetro(db, req.params.id);
       if (!retro) return res.status(404).json({ error: 'Retro not found' });
@@ -215,6 +218,7 @@ async function main() {
   });
 
   app.post('/api/retros/:id/action-items', async (req, res) => {
+    if (!isLlmConfigured()) return res.status(503).json({ error: 'AI features are not configured' });
     try {
       const retro = getRetro(db, req.params.id);
       if (!retro) return res.status(404).json({ error: 'Retro not found' });
@@ -464,6 +468,10 @@ async function main() {
 
     socket.on('suggest-groupings', async ({ column }, callback) => {
       if (!checkSocketRate(socketLimiter, socket, callback)) return;
+      if (!isLlmConfigured()) {
+        if (callback) callback({ error: 'AI features are not configured' });
+        return;
+      }
       const participant = getParticipantBySocket(db, socket.id);
       if (!participant) { if (callback) callback({ error: 'Not in a retro. Please rejoin.' }); return; }
       if (!participant.is_facilitator) {
@@ -519,6 +527,10 @@ async function main() {
       if (!participant) { if (callback) callback({ error: 'Not in a retro. Please rejoin.' }); return; }
       if (!participant.is_facilitator) {
         if (callback) callback({ error: 'Only the facilitator can generate a summary' });
+        return;
+      }
+      if (!isLlmConfigured()) {
+        if (callback) callback({ error: 'AI features are not configured' });
         return;
       }
       try {

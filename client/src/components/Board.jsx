@@ -71,6 +71,12 @@ export default function Board() {
   }, [socket, dispatch, navigate, shareCode]);
 
   useEffect(() => {
+    fetch('/api/config').then(r => r.json())
+      .then(data => dispatch({ type: 'SET_LLM_CONFIGURED', payload: !!data.llmConfigured }))
+      .catch(() => {});
+  }, [dispatch]);
+
+  useEffect(() => {
     if (state.retro) return;
     attemptRejoin();
   }, [state.retro, attemptRejoin]);

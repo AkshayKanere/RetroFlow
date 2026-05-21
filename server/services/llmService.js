@@ -4,6 +4,10 @@ const COLUMN_LABELS = {
   action: 'Action Items',
 };
 
+export function isLlmConfigured() {
+  return !!(process.env.LLM_GATEWAY_URL && process.env.LLM_API_KEY);
+}
+
 export function buildPrompt(cards, votes, participants = []) {
   const parentCards = cards.filter(c => !c.group_id);
   const voteCounts = {};
@@ -36,13 +40,10 @@ export function parseSummary(responseText) {
 }
 
 export async function generateSummary(cards, votes, participants = []) {
+  if (!isLlmConfigured()) return null;
   const prompt = buildPrompt(cards, votes, participants);
   const gatewayUrl = process.env.LLM_GATEWAY_URL;
   const apiKey = process.env.LLM_API_KEY;
-
-  if (!gatewayUrl || !apiKey) {
-    throw new Error('LLM_GATEWAY_URL and LLM_API_KEY environment variables are required');
-  }
 
   const model = process.env.LLM_MODEL || 'quick-thinking';
   const response = await fetch(gatewayUrl, {
@@ -68,12 +69,9 @@ export async function generateSummary(cards, votes, participants = []) {
 }
 
 async function callLLM(prompt) {
+  if (!isLlmConfigured()) return null;
   const gatewayUrl = process.env.LLM_GATEWAY_URL;
   const apiKey = process.env.LLM_API_KEY;
-
-  if (!gatewayUrl || !apiKey) {
-    throw new Error('LLM_GATEWAY_URL and LLM_API_KEY environment variables are required');
-  }
 
   const model = process.env.LLM_MODEL || 'quick-thinking';
   const response = await fetch(gatewayUrl, {

@@ -13,7 +13,7 @@ const PHASE_LABELS = {
 export default function Header() {
   const socket = useSocket();
   const { state } = useRetro();
-  const { retro, participant, participants, myVotes } = state;
+  const { retro, participant, participants, myVotes, llmConfigured } = state;
   const phase = retro?.phase;
   const isFacilitator = participant?.is_facilitator;
 
@@ -143,7 +143,7 @@ export default function Header() {
             End Adding Phase
           </button>
         )}
-        {isFacilitator && phase === 'grouping' && (
+        {isFacilitator && phase === 'grouping' && llmConfigured && (
           <button
             style={{ ...btnStyle, background: '#f39c12' }}
             onClick={handleAutoGroup}
@@ -163,7 +163,7 @@ export default function Header() {
             End Voting
           </button>
         )}
-        {isFacilitator && phase === 'discussion' && (
+        {isFacilitator && phase === 'discussion' && llmConfigured && (
           <button style={btnStyle} onClick={generateSummary} aria-label="Generate Summary">
             Generate Summary
           </button>

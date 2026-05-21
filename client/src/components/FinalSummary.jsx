@@ -82,6 +82,13 @@ export default function FinalSummary() {
   const [loading, setLoading] = useState(true);
   const [actionItems, setActionItems] = useState(null);
   const [loadingActions, setLoadingActions] = useState(false);
+  const [llmConfigured, setLlmConfigured] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/config').then(r => r.json())
+      .then(d => setLlmConfigured(!!d.llmConfigured))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch('/api/retros')
@@ -98,7 +105,7 @@ export default function FinalSummary() {
   }, [shareCode]);
 
   useEffect(() => {
-    if (!data?.retro?.id) return;
+    if (!data?.retro?.id || !llmConfigured) return;
     setLoadingActions(true);
     fetch('/api/retros/' + data.retro.id + '/action-items', { method: 'POST' })
       .then(r => {
@@ -108,7 +115,7 @@ export default function FinalSummary() {
       .then(result => setActionItems(result.actionItems || ''))
       .catch(() => setActionItems('__error__'))
       .finally(() => setLoadingActions(false));
-  }, [data?.retro?.id]);
+  }, [data?.retro?.id, llmConfigured]);
 
   if (loading) {
     return <div style={{ ...styles.container, textAlign: 'center', color: 'var(--text-secondary)' }}>Loading...</div>;
@@ -151,16 +158,18 @@ export default function FinalSummary() {
         </div>
       )}
 
-      <div style={styles.section}>
-        <div style={styles.sectionTitle}>AI Suggested Action Items</div>
-        {loadingActions ? (
-          <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Generating action items...</div>
-        ) : actionItems === '__error__' ? (
-          <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Unable to generate action items</div>
-        ) : actionItems ? (
-          <div style={styles.summaryText}>{actionItems}</div>
-        ) : null}
-      </div>
+      {llmConfigured && (
+        <div style={styles.section}>
+          <div style={styles.sectionTitle}>AI Suggested Action Items</div>
+          {loadingActions ? (
+            <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Generating action items...</div>
+          ) : actionItems === '__error__' ? (
+            <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Unable to generate action items</div>
+          ) : actionItems ? (
+            <div style={styles.summaryText}>{actionItems}</div>
+          ) : null}
+        </div>
+      )}
 
       {Object.entries(COLUMN_LABELS).map(([col, label]) => {
         const colCards = (cards || []).filter(c => c.column === col && !c.group_id)

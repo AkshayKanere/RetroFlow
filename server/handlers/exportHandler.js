@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx';
 import { getRetro, getCards, getParticipants, getVotesForRetro, getSummaryForRetro } from '../db.js';
-import { buildDetailedSummaryPrompt } from '../services/llmService.js';
+import { buildDetailedSummaryPrompt, isLlmConfigured } from '../services/llmService.js';
 
 export function buildExcelBuffer(db, retroId) {
   const retro = getRetro(db, retroId);
@@ -68,12 +68,26 @@ export async function buildDetailedSummaryMd(db, retroId) {
   const participants = getParticipants(db, retroId);
   const prompt = buildDetailedSummaryPrompt(cards, votes, retro.title, participants);
 
-  const gatewayUrl = process.env.LLM_GATEWAY_URL;
-  const apiKey = process.env.LLM_API_KEY;
-  if (!gatewayUrl || !apiKey) {
-    throw new Error('LLM not configured');
+  if (!isLlmConfigured()) {
+    const COLUMN_LABELS = { well: 'What Went Well', didnt: "What Didn't Go Well", action: 'Action Items' };
+    const voteCounts = {};
+    for (const v of votes) voteCounts[v.card_id] = (voteCounts[v.card_id] || 0) + 1;
+    const parentCards = cards.filter(c => !c.group_id);
+    let md = '# ' + retro.title + ' - Retrospective Summary\n\n';
+    md += '> AI summary unavailable (LLM not configured)\n\n';
+    md += '**Participants (' + participants.length + '):** ' + (participants.map(p => p.display_name).join(', ') || '(none)') + '\n\n';
+    for (const [col, label] of Object.entries(COLUMN_LABELS)) {
+      const colCards = parentCards.filter(c => c.column === col).sort((a, b) => (voteCounts[b.id] || 0) - (voteCounts[a.id] || 0));
+      md += '## ' + label + '\n';
+      if (colCards.length === 0) { md += '- (none)\n'; }
+      else { for (const card of colCards) md += '- ' + card.text + ' (' + (voteCounts[card.id] || 0) + ' votes)\n'; }
+      md += '\n';
+    }
+    return md;
   }
 
+  const gatewayUrl = process.env.LLM_GATEWAY_URL;
+  const apiKey = process.env.LLM_API_KEY;
   const model = process.env.LLM_MODEL || 'quick-thinking';
   const response = await fetch(gatewayUrl, {
     method: 'POST',

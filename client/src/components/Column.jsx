@@ -17,6 +17,7 @@ export default function Column({ column }) {
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [rephraseLoading, setRephraseLoading] = useState(false);
   const config = COLUMN_CONFIG[column];
+  const llmConfigured = state.llmConfigured;
 
   const visibleCards = state.cards
     .filter((c) => c.column === column && !c.group_id)
@@ -33,7 +34,7 @@ export default function Column({ column }) {
   const phase = state.retro?.phase;
 
   useEffect(() => {
-    if (cardCount === 0 || !retroId || (phase !== 'discussion' && phase !== 'ended')) {
+    if (!llmConfigured || cardCount === 0 || !retroId || (phase !== 'discussion' && phase !== 'ended')) {
       setSectionSummary('');
       return;
     }
@@ -180,7 +181,7 @@ export default function Column({ column }) {
             maxLength={500}
             aria-label="Add a point"
           />
-          {text.trim() && (
+          {text.trim() && llmConfigured && (
             <button
               style={rephraseBtnStyle}
               type="button"

@@ -101,6 +101,8 @@ function retroReducer(state, action) {
         ...state,
         retro: { ...state.retro, phase: 'ended' },
       };
+    case 'SET_LLM_CONFIGURED':
+      return { ...state, llmConfigured: action.payload };
     default:
       return state;
   }
@@ -115,6 +117,7 @@ const initialState = {
   summary: null,
   myVotes: [],
   voteCounts: {},
+  llmConfigured: false,
 };
 
 export function RetroProvider({ children }) {
