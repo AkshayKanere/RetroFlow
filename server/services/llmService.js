@@ -57,7 +57,7 @@ export async function generateSummary(cards, votes, participants = []) {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`,
-      'user-agent': 'RetroFlow/1.0.0',
+      'user-agent': process.env.LLM_USER_AGENT || 'RetroFlow/1.0.0',
     },
     body: JSON.stringify({
       model,
@@ -91,7 +91,7 @@ async function callLLM(prompt) {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`,
-      'user-agent': 'RetroFlow/1.0.0',
+      'user-agent': process.env.LLM_USER_AGENT || 'RetroFlow/1.0.0',
     },
     body: JSON.stringify({
       model,
