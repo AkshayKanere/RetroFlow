@@ -62,10 +62,10 @@ const styles = {
 
 export default function CreateRetro() {
   const navigate = useNavigate();
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState('Sprint');
   const [addMinutes, setAddMinutes] = useState(10);
-  const [voteMinutes, setVoteMinutes] = useState(10);
-  const [maxParticipants, setMaxParticipants] = useState(10);
+  const [voteMinutes, setVoteMinutes] = useState(5);
+  const [maxParticipants, setMaxParticipants] = useState(30);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [shareLink, setShareLink] = useState('');
