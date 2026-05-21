@@ -94,6 +94,8 @@ export default function Card({ card, column }) {
   return (
     <div
       style={cardStyle}
+      role="group"
+      aria-label={card.text}
       draggable={isFacilitator && phase === 'grouping'}
       onDragStart={handleDragStart}
       onDrop={handleDrop}
@@ -108,6 +110,7 @@ export default function Card({ card, column }) {
           style={voteBtnStyle}
           onClick={handleVote}
           disabled={phase !== 'voting' || (!hasVoted && votesLeft <= 0)}
+          aria-label={hasVoted ? 'Remove vote' : 'Vote for this card'}
         >
           {voteCount} {voteCount === 1 ? 'vote' : 'votes'}
         </button>

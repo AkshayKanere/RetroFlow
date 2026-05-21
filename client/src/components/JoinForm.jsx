@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSocket } from '../context/SocketContext';
 import { useRetro } from '../context/RetroContext';
@@ -69,6 +69,15 @@ export default function JoinForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem('retroSession'));
+      if (saved && saved.shareCode === shareCode && saved.participantId) {
+        navigate(`/retro/${shareCode}/board`, { replace: true });
+      }
+    } catch {}
+  }, [shareCode, navigate]);
+
   function handleSubmit(e) {
     e.preventDefault();
     if (!displayName.trim()) {
@@ -93,21 +102,28 @@ export default function JoinForm() {
           votes: response.votes,
         },
       });
+      sessionStorage.setItem('retroSession', JSON.stringify({
+        participantId: response.participant.id,
+        shareCode,
+        displayName: displayName.trim(),
+      }));
       navigate(`/retro/${shareCode}/board`);
     });
   }
 
   return (
     <div style={styles.container}>
-      <form style={styles.form} onSubmit={handleSubmit}>
+      <form style={styles.form} onSubmit={handleSubmit} aria-label="Join Retrospective">
         <div style={styles.title}>Join Retrospective</div>
         <div>
-          <label style={styles.label}>Display Name</label>
+          <label style={styles.label} htmlFor="displayName">Display Name</label>
           <input
+            id="displayName"
             style={styles.input}
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder="Your name"
+            maxLength={50}
             autoFocus
           />
         </div>

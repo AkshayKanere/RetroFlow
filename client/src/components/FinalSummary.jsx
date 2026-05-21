@@ -80,6 +80,8 @@ export default function FinalSummary() {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [actionItems, setActionItems] = useState(null);
+  const [loadingActions, setLoadingActions] = useState(false);
 
   useEffect(() => {
     fetch('/api/retros')
@@ -91,8 +93,22 @@ export default function FinalSummary() {
           .then(r => r.json())
           .then(state => setData({ retro, ...state }));
       })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [shareCode]);
+
+  useEffect(() => {
+    if (!data?.retro?.id) return;
+    setLoadingActions(true);
+    fetch('/api/retros/' + data.retro.id + '/action-items', { method: 'POST' })
+      .then(r => {
+        if (!r.ok) throw new Error();
+        return r.json();
+      })
+      .then(result => setActionItems(result.actionItems || ''))
+      .catch(() => setActionItems('__error__'))
+      .finally(() => setLoadingActions(false));
+  }, [data?.retro?.id]);
 
   if (loading) {
     return <div style={{ ...styles.container, textAlign: 'center', color: 'var(--text-secondary)' }}>Loading...</div>;
@@ -102,7 +118,7 @@ export default function FinalSummary() {
     return <div style={{ ...styles.container, textAlign: 'center', color: 'var(--text-secondary)' }}>Retro not found.</div>;
   }
 
-  const { retro, cards, votes, summary } = data;
+  const { retro, cards, votes, summary, participants } = data;
 
   const voteCounts = {};
   for (const v of (votes || [])) {
@@ -116,8 +132,17 @@ export default function FinalSummary() {
           <div style={styles.title}>{retro.title}</div>
           <span style={styles.badge}>ENDED</span>
         </div>
-        <button style={styles.backBtn} onClick={() => navigate('/')}>Back to Home</button>
+        <button style={styles.backBtn} onClick={() => navigate('/')} aria-label="Back to home">Back to Home</button>
       </div>
+
+      {participants && participants.length > 0 && (
+        <div style={styles.section}>
+          <div style={styles.sectionTitle}>Participants ({participants.length})</div>
+          <div style={{ color: 'var(--text-primary)', fontSize: 13, lineHeight: 1.6 }}>
+            {participants.map(p => p.display_name).join(', ')}
+          </div>
+        </div>
+      )}
 
       {summary && (
         <div style={styles.section}>
@@ -126,8 +151,20 @@ export default function FinalSummary() {
         </div>
       )}
 
+      <div style={styles.section}>
+        <div style={styles.sectionTitle}>AI Suggested Action Items</div>
+        {loadingActions ? (
+          <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Generating action items...</div>
+        ) : actionItems === '__error__' ? (
+          <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Unable to generate action items</div>
+        ) : actionItems ? (
+          <div style={styles.summaryText}>{actionItems}</div>
+        ) : null}
+      </div>
+
       {Object.entries(COLUMN_LABELS).map(([col, label]) => {
-        const colCards = (cards || []).filter(c => c.column === col && !c.group_id);
+        const colCards = (cards || []).filter(c => c.column === col && !c.group_id)
+          .sort((a, b) => (voteCounts[b.id] || 0) - (voteCounts[a.id] || 0));
         return (
           <div key={col} style={styles.section}>
             <div style={styles.sectionTitle}>{label}</div>

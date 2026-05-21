@@ -2,7 +2,7 @@
   "name": "retrospective-tool",
   "private": true,
   "scripts": {
-    "dev:server": "cd server && node index.js",
+    "dev:server": "cd server && node --env-file=../.env index.js",
     "dev:client": "cd client && npx vite",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "build": "cd client && npx vite build",

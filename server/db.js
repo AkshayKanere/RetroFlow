@@ -1,5 +1,7 @@
 import initSqlJs from "sql.js";
 import { v4 as uuidv4 } from "uuid";
+import fs from "fs";
+import path from "path";
 
 class DbWrapper {
   constructor(sqlDb) {
@@ -109,6 +111,24 @@ export async function initDb(buffer) {
   return db;
 }
 
+export function loadDbFromFile(filepath) {
+  try {
+    if (fs.existsSync(filepath)) {
+      return fs.readFileSync(filepath);
+    }
+  } catch (_) {}
+  return null;
+}
+
+export function saveDbToFile(db, filepath) {
+  const dir = path.dirname(filepath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  const data = db.export();
+  fs.writeFileSync(filepath, Buffer.from(data));
+}
+
 function generateShareCode() {
   return uuidv4().slice(0, 8).toUpperCase();
 }
@@ -143,8 +163,17 @@ export function addParticipant(db, { retroId, displayName, socketId, isFacilitat
   return db.prepare(`SELECT * FROM participants WHERE id = ?`).get(id);
 }
 
+export function getParticipant(db, id) {
+  return db.prepare(`SELECT * FROM participants WHERE id = ?`).get(id);
+}
+
 export function getParticipantBySocket(db, socketId) {
   return db.prepare(`SELECT * FROM participants WHERE socket_id = ?`).get(socketId);
+}
+
+export function updateParticipantSocket(db, participantId, socketId) {
+  db.prepare(`UPDATE participants SET socket_id = ? WHERE id = ?`).run(socketId, participantId);
+  return db.prepare(`SELECT * FROM participants WHERE id = ?`).get(participantId);
 }
 
 export function getParticipants(db, retroId) {
@@ -155,6 +184,14 @@ export function removeParticipantBySocket(db, socketId) {
   const participant = getParticipantBySocket(db, socketId);
   if (participant) {
     db.prepare(`DELETE FROM participants WHERE socket_id = ?`).run(socketId);
+  }
+  return participant;
+}
+
+export function disconnectParticipantBySocket(db, socketId) {
+  const participant = getParticipantBySocket(db, socketId);
+  if (participant) {
+    db.prepare(`UPDATE participants SET socket_id = NULL WHERE socket_id = ?`).run(socketId);
   }
   return participant;
 }

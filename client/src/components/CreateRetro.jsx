@@ -111,7 +111,7 @@ export default function CreateRetro() {
     navigator.clipboard.writeText(shareLink).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    });
+    }).catch(() => {});
   }
 
   function handleJoin() {
@@ -152,43 +152,51 @@ export default function CreateRetro() {
 
   return (
     <div style={styles.container}>
-      <form style={styles.form} onSubmit={handleSubmit}>
+      <form style={styles.form} onSubmit={handleSubmit} aria-label="Create Retrospective">
         <div style={styles.title}>Create Retrospective</div>
         <div>
-          <label style={styles.label}>Title</label>
+          <label style={styles.label} htmlFor="title">Title</label>
           <input
+            id="title"
             style={styles.input}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Sprint 42 Retrospective"
+            maxLength={100}
           />
         </div>
         <div>
-          <label style={styles.label}>Add Points Timer (minutes)</label>
+          <label style={styles.label} htmlFor="addMinutes">Add Points Timer (minutes)</label>
           <input
+            id="addMinutes"
             style={styles.input}
             type="number"
             min={1}
+            max={60}
             value={addMinutes}
             onChange={(e) => setAddMinutes(e.target.value)}
           />
         </div>
         <div>
-          <label style={styles.label}>Voting Timer (minutes)</label>
+          <label style={styles.label} htmlFor="voteMinutes">Voting Timer (minutes)</label>
           <input
+            id="voteMinutes"
             style={styles.input}
             type="number"
             min={1}
+            max={60}
             value={voteMinutes}
             onChange={(e) => setVoteMinutes(e.target.value)}
           />
         </div>
         <div>
-          <label style={styles.label}>Max Participants</label>
+          <label style={styles.label} htmlFor="maxParticipants">Max Participants</label>
           <input
+            id="maxParticipants"
             style={styles.input}
             type="number"
-            min={2}
+            min={1}
+            max={60}
             value={maxParticipants}
             onChange={(e) => setMaxParticipants(e.target.value)}
           />

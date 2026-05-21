@@ -1,11 +1,9 @@
-import { useState } from 'react';
 import { useSocket } from '../context/SocketContext';
 import { useRetro } from '../context/RetroContext';
 
 export default function GroupBadge({ parentCard, childCards }) {
   const socket = useSocket();
   const { state } = useRetro();
-  const [expanded, setExpanded] = useState(false);
   const isFacilitator = state.participant?.is_facilitator;
   const phase = state.retro?.phase;
 
@@ -21,11 +19,8 @@ export default function GroupBadge({ parentCard, childCards }) {
     fontSize: 12,
   };
 
-  const toggleStyle = {
+  const labelStyle = {
     color: 'var(--text-secondary)',
-    cursor: 'pointer',
-    background: 'none',
-    border: 'none',
     fontSize: 12,
     padding: 0,
   };
@@ -53,23 +48,19 @@ export default function GroupBadge({ parentCard, childCards }) {
 
   return (
     <div style={badgeStyle}>
-      <button style={toggleStyle} onClick={() => setExpanded(!expanded)}>
-        {expanded ? '▾' : '▸'} grouped ({childCards.length})
-      </button>
-      {expanded && (
-        <div>
-          {childCards.map((child) => (
-            <div key={child.id} style={childStyle}>
-              <span>{child.text}</span>
-              {isFacilitator && phase === 'grouping' && (
-                <button style={ungroupBtnStyle} onClick={() => handleUngroup(child.id)}>
-                  ungroup
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+      <span style={labelStyle}>grouped ({childCards.length})</span>
+      <div>
+        {childCards.map((child) => (
+          <div key={child.id} style={childStyle}>
+            <span>{child.text}</span>
+            {isFacilitator && phase === 'grouping' && (
+              <button style={ungroupBtnStyle} onClick={() => handleUngroup(child.id)}>
+                ungroup
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

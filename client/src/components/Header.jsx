@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useSocket } from '../context/SocketContext';
 import { useRetro } from '../context/RetroContext';
 
@@ -16,6 +17,10 @@ export default function Header() {
   const phase = retro?.phase;
   const isFacilitator = participant?.is_facilitator;
 
+  const [autoGrouping, setAutoGrouping] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showApproval, setShowApproval] = useState(false);
+
   function startPhase(p) {
     socket.emit('start-phase', { phase: p });
   }
@@ -26,6 +31,43 @@ export default function Header() {
 
   function generateSummary() {
     socket.emit('generate-summary', {});
+  }
+
+  async function handleAutoGroup() {
+    setAutoGrouping(true);
+    const allSuggestions = [];
+    const columns = ['well', 'didnt', 'action'];
+    for (const column of columns) {
+      await new Promise((resolve) => {
+        socket.emit('suggest-groupings', { column }, (res) => {
+          if (res?.suggestions) {
+            allSuggestions.push(...res.suggestions);
+          }
+          resolve();
+        });
+      });
+    }
+    setSuggestions(allSuggestions);
+    setAutoGrouping(false);
+    if (allSuggestions.length > 0) {
+      setShowApproval(true);
+    }
+  }
+
+  function handleApproveAll() {
+    const groupings = suggestions.map((s) => ({
+      parentCardId: s.parentCardId,
+      childCardIds: s.childCardIds,
+    }));
+    socket.emit('apply-groupings', { groupings }, () => {
+      setShowApproval(false);
+      setSuggestions([]);
+    });
+  }
+
+  function handleCancelApproval() {
+    setShowApproval(false);
+    setSuggestions([]);
   }
 
   const headerStyle = {
@@ -92,33 +134,44 @@ export default function Header() {
           <span>Votes left: {3 - myVotes.length}</span>
         )}
         {isFacilitator && phase === 'lobby' && (
-          <button style={btnStyle} onClick={() => startPhase('adding')}>
+          <button style={btnStyle} onClick={() => startPhase('adding')} aria-label="Start Adding Points">
             Start Adding Points
           </button>
         )}
         {isFacilitator && phase === 'adding' && (
-          <button style={btnStyle} onClick={endPhase}>
+          <button style={btnStyle} onClick={endPhase} aria-label="End Adding Phase">
             End Adding Phase
           </button>
         )}
         {isFacilitator && phase === 'grouping' && (
-          <button style={btnStyle} onClick={() => startPhase('voting')}>
+          <button
+            style={{ ...btnStyle, background: '#f39c12' }}
+            onClick={handleAutoGroup}
+            disabled={autoGrouping}
+            aria-label="AI Auto-Group"
+          >
+            {autoGrouping ? 'Grouping...' : 'AI Auto-Group'}
+          </button>
+        )}
+        {isFacilitator && phase === 'grouping' && (
+          <button style={btnStyle} onClick={() => startPhase('voting')} aria-label="Start Voting">
             Start Voting
           </button>
         )}
         {isFacilitator && phase === 'voting' && (
-          <button style={btnStyle} onClick={endPhase}>
+          <button style={btnStyle} onClick={endPhase} aria-label="End Voting">
             End Voting
           </button>
         )}
         {isFacilitator && phase === 'discussion' && (
-          <button style={btnStyle} onClick={generateSummary}>
+          <button style={btnStyle} onClick={generateSummary} aria-label="Generate Summary">
             Generate Summary
           </button>
         )}
         {isFacilitator && (
           <button
             style={{ ...btnStyle, background: 'var(--color-didnt)' }}
+            aria-label="End Retrospective"
             onClick={() => {
               if (window.confirm('End this retrospective? This cannot be undone.')) {
                 socket.emit('end-retro', {});
@@ -129,6 +182,71 @@ export default function Header() {
           </button>
         )}
       </div>
+      {showApproval && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+        }}>
+          <div style={{
+            background: 'var(--bg-secondary)',
+            borderRadius: 10,
+            padding: 24,
+            maxWidth: 500,
+            width: '90%',
+            maxHeight: '70vh',
+            overflowY: 'auto',
+          }}>
+            <h3 style={{ margin: '0 0 16px', color: 'var(--text-primary)' }}>
+              AI Grouping Suggestions
+            </h3>
+            {suggestions.map((s, i) => {
+              const cardMap = {};
+              for (const c of state.cards) cardMap[c.id] = c.text;
+              return (
+                <div key={i} style={{
+                  background: 'var(--bg-primary)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 6,
+                  padding: 12,
+                  marginBottom: 10,
+                }}>
+                  <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
+                    Parent: {cardMap[s.parentCardId] || s.parentCardId}
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 4 }}>
+                    Grouped with: {(s.childCardIds || []).map(id => cardMap[id] || id).join(', ')}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                    Reason: {s.reason}
+                  </div>
+                </div>
+              );
+            })}
+            <div style={{ display: 'flex', gap: 10, marginTop: 16, justifyContent: 'flex-end' }}>
+              <button
+                style={{ ...btnStyle, background: 'var(--color-well)' }}
+                onClick={handleApproveAll}
+              >
+                Approve All
+              </button>
+              <button
+                style={{ ...btnStyle, background: 'var(--color-didnt)' }}
+                onClick={handleCancelApproval}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

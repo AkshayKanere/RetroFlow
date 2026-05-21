@@ -87,15 +87,30 @@ export default function HomePage() {
   const [retros, setRetros] = useState([]);
   const [llmConfigured, setLlmConfigured] = useState(false);
   const [loading, setLoading] = useState(true);
-  const isFacilitator = !!sessionStorage.getItem('facilitatorToken');
+  const [isFacilitator, setIsFacilitator] = useState(false);
 
   useEffect(() => {
+    const token = sessionStorage.getItem('facilitatorToken');
+    const verifyPromise = token
+      ? fetch('/api/facilitator/verify', { headers: { Authorization: 'Bearer ' + token } })
+          .then(r => r.json())
+          .then(data => {
+            if (!data.valid) sessionStorage.removeItem('facilitatorToken');
+            return data.valid;
+          })
+          .catch(() => false)
+      : Promise.resolve(false);
+
     Promise.all([
       fetch('/api/retros').then(r => r.json()),
       fetch('/api/config').then(r => r.json()),
-    ]).then(([retrosData, configData]) => {
+      verifyPromise,
+    ]).then(([retrosData, configData, isValid]) => {
       setRetros(retrosData.retros || []);
       setLlmConfigured(configData.llmConfigured);
+      setIsFacilitator(isValid);
+      setLoading(false);
+    }).catch(() => {
       setLoading(false);
     });
   }, []);
@@ -125,7 +140,7 @@ export default function HomePage() {
         <span style={styles.logo}>RetroBoard</span>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           {isFacilitator && !activeRetro && (
-            <button style={styles.createBtn} onClick={() => navigate('/create')}>
+            <button style={styles.createBtn} onClick={() => navigate('/create')} aria-label="Create New Retro">
               Create New Retro
             </button>
           )}
@@ -133,7 +148,7 @@ export default function HomePage() {
             <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>Active retro exists</span>
           )}
           {!isFacilitator && (
-            <button style={styles.loginLink} onClick={() => navigate('/facilitator')}>
+            <button style={styles.loginLink} onClick={() => navigate('/facilitator')} aria-label="Facilitator Login">
               Facilitator Login
             </button>
           )}
@@ -154,6 +169,7 @@ export default function HomePage() {
             <button
               style={{ ...styles.btn, ...styles.joinBtn, padding: '10px 24px', fontSize: 14 }}
               onClick={() => navigate('/retro/' + activeRetro.share_code)}
+              aria-label="Join"
             >
               Join
             </button>

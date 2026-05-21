@@ -1,10 +1,21 @@
-import { createContext, useContext, useMemo } from 'react';
+import { createContext, useContext, useEffect, useMemo } from 'react';
 import { io } from 'socket.io-client';
 
 const SocketContext = createContext(null);
 
 export function SocketProvider({ children }) {
-  const socket = useMemo(() => io('/', { autoConnect: true }), []);
+  const socket = useMemo(() => io('/', {
+    autoConnect: true,
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    timeout: 10000,
+  }), []);
+
+  useEffect(() => {
+    return () => socket.disconnect();
+  }, [socket]);
 
   return (
     <SocketContext.Provider value={socket}>

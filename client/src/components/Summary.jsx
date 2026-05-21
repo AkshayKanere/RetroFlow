@@ -40,7 +40,7 @@ export default function Summary() {
       {!collapsed && (
         <div style={bodyStyle}>
           {state.summary
-            ? state.summary
+            ? (typeof state.summary === 'object' ? state.summary.text : state.summary)
             : 'Summary will be generated automatically as cards are added...'}
         </div>
       )}

@@ -103,11 +103,12 @@ export default function FacilitatorLogin() {
 
   return (
     <div style={styles.container}>
-      <form style={styles.form} onSubmit={handleSubmit}>
+      <form style={styles.form} onSubmit={handleSubmit} aria-label="Facilitator Login">
         <div style={styles.title}>Facilitator Login</div>
         <div>
-          <label style={styles.label}>Password</label>
+          <label style={styles.label} htmlFor="password">Password</label>
           <input
+            id="password"
             style={styles.input}
             type="password"
             value={password}

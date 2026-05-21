@@ -4,6 +4,9 @@ import { buildDetailedSummaryPrompt } from '../services/llmService.js';
 
 export function buildExcelBuffer(db, retroId) {
   const retro = getRetro(db, retroId);
+  if (!retro) {
+    throw new Error('Retro not found');
+  }
   const cards = getCards(db, retroId);
   const participants = getParticipants(db, retroId);
   const votes = getVotesForRetro(db, retroId);
@@ -57,9 +60,13 @@ export function buildExcelBuffer(db, retroId) {
 
 export async function buildDetailedSummaryMd(db, retroId) {
   const retro = getRetro(db, retroId);
+  if (!retro) {
+    throw new Error('Retro not found');
+  }
   const cards = getCards(db, retroId);
   const votes = getVotesForRetro(db, retroId);
-  const prompt = buildDetailedSummaryPrompt(cards, votes, retro.title);
+  const participants = getParticipants(db, retroId);
+  const prompt = buildDetailedSummaryPrompt(cards, votes, retro.title, participants);
 
   const gatewayUrl = process.env.LLM_GATEWAY_URL;
   const apiKey = process.env.LLM_API_KEY;
@@ -74,8 +81,6 @@ export async function buildDetailedSummaryMd(db, retroId) {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + apiKey,
       'user-agent': 'KGPT-CLI/1.7.0',
-      'x-continue-unique-id': '9152ffa0-1fc3-421b-9b2a-183c0cc27672',
-      'x-user-email': 'akshay.kanere@kpit.com',
     },
     body: JSON.stringify({
       model,
