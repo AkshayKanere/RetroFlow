@@ -42,7 +42,7 @@ export default function Board() {
     try {
       const saved = JSON.parse(sessionStorage.getItem('retroSession'));
       if (saved && saved.shareCode === shareCode && saved.participantId) {
-        socket.emit('rejoin-retro', { participantId: saved.participantId, shareCode }, (response) => {
+        socket.emit('rejoin-retro', { participantId: saved.participantId, shareCode, facilitatorToken: sessionStorage.getItem('facilitatorToken') || null }, (response) => {
           if (response.error) {
             sessionStorage.removeItem('retroSession');
             navigate('/retro/' + shareCode, { replace: true });

@@ -3,7 +3,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { initDb, loadDbFromFile, saveDbToFile, getParticipant, getParticipantBySocket, updateParticipantSocket, removeParticipantBySocket, disconnectParticipantBySocket, getCards, getVotesForRetro, saveSummary, getParticipants, getRetro, getActiveRetro, getAllRetros, getSummaryForRetro } from './db.js';
+import { initDb, loadDbFromFile, saveDbToFile, getParticipant, getParticipantBySocket, updateParticipantSocket, upgradeToFacilitator, removeParticipantBySocket, disconnectParticipantBySocket, getCards, getVotesForRetro, saveSummary, getParticipants, getRetro, getActiveRetro, getAllRetros, getSummaryForRetro } from './db.js';
 import { handleCreateRetro, handleJoinRetro, getRetroState } from './handlers/retroHandler.js';
 import { handleAddCard, handleGroupCards, handleUngroupCard } from './handlers/cardHandler.js';
 import { handleVote, handleUnvote } from './handlers/voteHandler.js';
@@ -276,14 +276,14 @@ async function main() {
       log.info('Participant joined:', displayName, 'facilitator:', isFacilitator);
     });
 
-    socket.on('rejoin-retro', ({ participantId, shareCode }, callback) => {
+    socket.on('rejoin-retro', ({ participantId, shareCode, facilitatorToken }, callback) => {
       if (!checkSocketRate(socketLimiter, socket, callback)) return;
       try {
         if (!participantId || !shareCode) {
           if (callback) callback({ error: 'Missing participantId or shareCode' });
           return;
         }
-        const participant = getParticipant(db, participantId);
+        let participant = getParticipant(db, participantId);
         if (!participant) {
           if (callback) callback({ error: 'Participant not found' });
           return;
@@ -297,12 +297,16 @@ async function main() {
           if (callback) callback({ error: 'Retro has ended' });
           return;
         }
+        if (!participant.is_facilitator && facilitatorToken && verifyFacilitatorToken(facilitatorToken)) {
+          participant = upgradeToFacilitator(db, participantId);
+          log.info('Participant upgraded to facilitator on rejoin:', participant.display_name);
+        }
         updateParticipantSocket(db, participantId, socket.id);
         socket.join(retro.id);
         const state = getRetroState(db, retro.id);
         const summaryRow = getSummaryForRetro(db, retro.id);
         if (callback) callback({ participant, ...state, summary: summaryRow ? summaryRow.text : null });
-        log.info('Participant rejoined:', participant.display_name);
+        log.info('Participant rejoined:', participant.display_name, 'facilitator:', !!participant.is_facilitator);
       } catch (err) {
         log.error('rejoin-retro error:', err.message, err.stack);
         if (callback) callback({ error: 'Server error: ' + err.message });

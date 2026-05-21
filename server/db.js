@@ -186,6 +186,11 @@ export function updateParticipantSocket(db, participantId, socketId) {
   return db.prepare(`SELECT * FROM participants WHERE id = ?`).get(participantId);
 }
 
+export function upgradeToFacilitator(db, participantId) {
+  db.prepare(`UPDATE participants SET is_facilitator = 1 WHERE id = ?`).run(participantId);
+  return db.prepare(`SELECT * FROM participants WHERE id = ?`).get(participantId);
+}
+
 export function getParticipants(db, retroId) {
   return db.prepare(`SELECT * FROM participants WHERE retro_id = ?`).all(retroId);
 }
