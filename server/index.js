@@ -19,7 +19,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 async function main() {
   const app = express();
   const server = createServer(app);
-  const io = new Server(server, { cors: { origin: process.env.CORS_ORIGIN || 'http://localhost:5173' } });
+  const io = new Server(server, {
+    cors: { origin: process.env.CORS_ORIGIN || 'http://localhost:5173' },
+    pingInterval: 3000,
+    pingTimeout: 2000,
+  });
 
   app.use(express.json());
 
@@ -306,6 +310,7 @@ async function main() {
         const state = getRetroState(db, retro.id);
         const summaryRow = getSummaryForRetro(db, retro.id);
         if (callback) callback({ participant, ...state, summary: summaryRow ? summaryRow.text : null });
+        io.to(retro.id).emit('participant-joined', { participant, participants: state.participants });
         log.info('Participant rejoined:', participant.display_name, 'facilitator:', !!participant.is_facilitator);
       } catch (err) {
         log.error('rejoin-retro error:', err.message, err.stack);

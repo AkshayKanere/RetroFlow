@@ -14,7 +14,14 @@ export function SocketProvider({ children }) {
   }), []);
 
   useEffect(() => {
-    return () => socket.disconnect();
+    function handleBeforeUnload() {
+      socket.disconnect();
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      socket.disconnect();
+    };
   }, [socket]);
 
   return (

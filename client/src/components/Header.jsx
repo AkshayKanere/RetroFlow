@@ -22,11 +22,22 @@ export default function Header() {
   const [showApproval, setShowApproval] = useState(false);
 
   function startPhase(p) {
-    socket.emit('start-phase', { phase: p });
+    if (!socket.connected) {
+      alert('Not connected to server. Reconnecting...');
+      socket.connect();
+      return;
+    }
+    console.log('startPhase emit:', p, 'socket connected:', socket.connected, 'id:', socket.id);
+    socket.emit('start-phase', { phase: p }, (res) => {
+      console.log('startPhase response:', res);
+      if (res?.error) alert('Failed: ' + res.error);
+    });
   }
 
   function endPhase() {
-    socket.emit('end-phase', {});
+    socket.emit('end-phase', {}, (res) => {
+      if (res?.error) alert('Failed: ' + res.error);
+    });
   }
 
   function generateSummary() {

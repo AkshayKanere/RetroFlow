@@ -89,13 +89,18 @@ export default function Board() {
       setDisconnected(false);
       attemptRejoin();
     }
+    function onBeforeUnload() {
+      socket.disconnect();
+    }
 
     socket.on('disconnect', onDisconnect);
     socket.on('connect', onConnect);
+    window.addEventListener('beforeunload', onBeforeUnload);
 
     return () => {
       socket.off('disconnect', onDisconnect);
       socket.off('connect', onConnect);
+      window.removeEventListener('beforeunload', onBeforeUnload);
     };
   }, [socket, attemptRejoin]);
 

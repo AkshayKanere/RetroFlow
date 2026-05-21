@@ -192,6 +192,10 @@ export function upgradeToFacilitator(db, participantId) {
 }
 
 export function getParticipants(db, retroId) {
+  return db.prepare(`SELECT * FROM participants WHERE retro_id = ? AND socket_id IS NOT NULL`).all(retroId);
+}
+
+export function getAllParticipants(db, retroId) {
   return db.prepare(`SELECT * FROM participants WHERE retro_id = ?`).all(retroId);
 }
 
