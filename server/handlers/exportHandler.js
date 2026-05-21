@@ -1,8 +1,10 @@
 import * as XLSX from 'xlsx';
 import { getRetro, getCards, getParticipants, getVotesForRetro, getSummaryForRetro } from '../db.js';
 import { buildDetailedSummaryPrompt, isLlmConfigured } from '../services/llmService.js';
+import * as log from '../services/logger.js';
 
 export function buildExcelBuffer(db, retroId) {
+  log.debug('buildExcelBuffer: starting export for retro', retroId);
   const retro = getRetro(db, retroId);
   if (!retro) {
     throw new Error('Retro not found');
@@ -55,10 +57,12 @@ export function buildExcelBuffer(db, retroId) {
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summarySheet), 'Summary');
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(votesSheet), 'Votes');
 
+  log.debug('buildExcelBuffer: export complete for retro', retroId);
   return Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }));
 }
 
 export async function buildDetailedSummaryMd(db, retroId) {
+  log.debug('buildDetailedSummaryMd: starting for retro', retroId);
   const retro = getRetro(db, retroId);
   if (!retro) {
     throw new Error('Retro not found');
@@ -69,6 +73,7 @@ export async function buildDetailedSummaryMd(db, retroId) {
   const prompt = buildDetailedSummaryPrompt(cards, votes, retro.title, participants);
 
   if (!isLlmConfigured()) {
+    log.debug('buildDetailedSummaryMd: LLM not configured, using fallback');
     const COLUMN_LABELS = { well: 'What Went Well', didnt: "What Didn't Go Well", action: 'Action Items' };
     const voteCounts = {};
     for (const v of votes) voteCounts[v.card_id] = (voteCounts[v.card_id] || 0) + 1;
@@ -94,7 +99,7 @@ export async function buildDetailedSummaryMd(db, retroId) {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + apiKey,
-      'user-agent': 'KGPT-CLI/1.7.0',
+      'user-agent': 'RetroFlow/1.0.0',
     },
     body: JSON.stringify({
       model,
@@ -108,5 +113,6 @@ export async function buildDetailedSummaryMd(db, retroId) {
 
   const data = await response.json();
   const text = data.choices?.[0]?.message?.content || data.response || '';
+  log.debug('buildDetailedSummaryMd: complete for retro', retroId);
   return '# ' + retro.title + ' - Retrospective Summary\n\n' + text.trim() + '\n';
 }

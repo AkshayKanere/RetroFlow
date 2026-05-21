@@ -10,7 +10,7 @@ A real-time collaborative retrospective meeting tool for agile teams. Participan
 - **Voting** - 3 votes per person, distributed across any cards
 - **Duplicate Grouping** - Facilitator can drag-and-drop to merge similar cards
 - **Timed Phases** - Configurable timers for adding points and voting
-- **AI Summary** - 2-sentence retrospective summary via KPIT LLM Gateway
+- **AI Summary** - 2-sentence retrospective summary via LLM Gateway
 - **Facilitator Controls** - Start/end phases, group cards, generate summary
 
 ## Tech Stack
@@ -18,7 +18,7 @@ A real-time collaborative retrospective meeting tool for agile teams. Participan
 - **Frontend:** React 18, Vite, React Router, Socket.IO Client
 - **Backend:** Node.js, Express, Socket.IO
 - **Database:** SQLite (sql.js - pure JS, no native compilation)
-- **LLM:** KPIT LLM Gateway (OpenAI-compatible API)
+- **LLM:** LLM Gateway (OpenAI-compatible API)
 
 ## Setup
 
@@ -42,7 +42,7 @@ cd ..
 Copy `.env.example` to `.env` and fill in your values:
 
 ```
-LLM_GATEWAY_URL=https://llm-gateway-cv.ai-apps.kpit.com/v1/chat/completions
+LLM_GATEWAY_URL=your-llm-gateway-url-here
 LLM_API_KEY=your-api-key
 LLM_MODEL=quick-thinking
 PORT=3001
@@ -94,7 +94,7 @@ RetrospectiveTool/
       context/              # SocketContext, RetroContext (state management)
   server/
     handlers/               # retroHandler, cardHandler, voteHandler, phaseHandler
-    services/               # llmService (KPIT Gateway integration)
+    services/               # llmService (LLM Gateway integration)
     db.js                   # SQLite schema and queries (sql.js)
     index.js                # Express + Socket.IO server
     tests/                  # Vitest test suites

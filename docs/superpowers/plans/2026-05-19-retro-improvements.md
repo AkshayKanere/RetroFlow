@@ -823,9 +823,8 @@ export async function buildDetailedSummaryMd(db, retroId) {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + apiKey,
-      'user-agent': 'KGPT-CLI/1.7.0',
+      'user-agent': 'RetroFlow/1.0.0',
       'x-continue-unique-id': '9152ffa0-1fc3-421b-9b2a-183c0cc27672',
-      'x-user-email': 'akshay.kanere@kpit.com',
     },
     body: JSON.stringify({
       model,
@@ -1938,7 +1937,7 @@ git commit -m "feat: add new routes for home, facilitator login, final summary"
 - [ ] **Step 1: Add FACILITATOR_PASSWORD**
 
 ```
-LLM_GATEWAY_URL=https://llm-gateway-cv.ai-apps.kpit.com/v1/chat/completions
+LLM_GATEWAY_URL=your-llm-gateway-url-here
 LLM_API_KEY=your-api-key-here
 LLM_MODEL=quick-thinking
 PORT=3001

@@ -1,3 +1,5 @@
+import * as log from './logger.js';
+
 const COLUMN_LABELS = {
   well: 'What Went Well',
   didnt: "What Didn't Go Well",
@@ -40,8 +42,12 @@ export function parseSummary(responseText) {
 }
 
 export async function generateSummary(cards, votes, participants = []) {
-  if (!isLlmConfigured()) return null;
+  if (!isLlmConfigured()) {
+    log.debug('generateSummary: LLM not configured, skipping');
+    return null;
+  }
   const prompt = buildPrompt(cards, votes, participants);
+  log.debug('generateSummary: calling LLM, prompt length:', prompt.length);
   const gatewayUrl = process.env.LLM_GATEWAY_URL;
   const apiKey = process.env.LLM_API_KEY;
 
@@ -51,7 +57,7 @@ export async function generateSummary(cards, votes, participants = []) {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`,
-      'user-agent': 'KGPT-CLI/1.7.0',
+      'user-agent': 'RetroFlow/1.0.0',
     },
     body: JSON.stringify({
       model,
@@ -60,16 +66,22 @@ export async function generateSummary(cards, votes, participants = []) {
   });
 
   if (!response.ok) {
+    log.debug('generateSummary: LLM error status', response.status);
     throw new Error(`LLM Gateway error: ${response.status}`);
   }
 
   const data = await response.json();
   const text = data.choices?.[0]?.message?.content || data.response || '';
+  log.debug('generateSummary: success, response length:', text.length);
   return parseSummary(text);
 }
 
 async function callLLM(prompt) {
-  if (!isLlmConfigured()) return null;
+  if (!isLlmConfigured()) {
+    log.debug('callLLM: LLM not configured, skipping');
+    return null;
+  }
+  log.debug('callLLM: calling LLM, prompt length:', prompt.length);
   const gatewayUrl = process.env.LLM_GATEWAY_URL;
   const apiKey = process.env.LLM_API_KEY;
 
@@ -79,7 +91,7 @@ async function callLLM(prompt) {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`,
-      'user-agent': 'KGPT-CLI/1.7.0',
+      'user-agent': 'RetroFlow/1.0.0',
     },
     body: JSON.stringify({
       model,
@@ -88,11 +100,14 @@ async function callLLM(prompt) {
   });
 
   if (!response.ok) {
+    log.debug('callLLM: LLM error status', response.status);
     throw new Error(`LLM Gateway error: ${response.status}`);
   }
 
   const data = await response.json();
-  return (data.choices?.[0]?.message?.content || data.response || '').trim();
+  const text = (data.choices?.[0]?.message?.content || data.response || '').trim();
+  log.debug('callLLM: success, response length:', text.length);
+  return text;
 }
 
 export async function generateSectionSummary(cards, votes, column) {

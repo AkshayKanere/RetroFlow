@@ -19,7 +19,7 @@
 - `server/handlers/cardHandler.js` - Add card, group/ungroup cards
 - `server/handlers/voteHandler.js` - Vote/unvote with 3-vote limit
 - `server/handlers/phaseHandler.js` - Phase transitions, timer management
-- `server/services/llmService.js` - KPIT LLM Gateway integration
+- `server/services/llmService.js` - LLM Gateway integration
 
 ### Client
 - `client/src/main.jsx` - React entry point
@@ -143,7 +143,7 @@ export default defineConfig({
 - [ ] **Step 5: Create .env.example**
 
 ```
-LLM_GATEWAY_URL=https://your-kpit-llm-gateway-url/api/chat
+LLM_GATEWAY_URL=your-llm-gateway-url-here
 LLM_API_KEY=your-api-key-here
 PORT=3001
 ```
@@ -1011,7 +1011,7 @@ Expected: ALL PASS
 
 ```bash
 git add server/services/llmService.js server/tests/llmService.test.js
-git commit -m "feat: add LLM service with KPIT Gateway integration"
+git commit -m "feat: add LLM service with LLM Gateway integration"
 ```
 
 ---

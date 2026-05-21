@@ -2,7 +2,7 @@
 
 ## Overview
 
-A real-time collaborative retrospective board where team members add points, vote, and discuss sprint outcomes. Features include anonymous participation, facilitator-controlled timed phases, duplicate grouping, and AI-powered summaries via KPIT LLM Gateway.
+A real-time collaborative retrospective board where team members add points, vote, and discuss sprint outcomes. Features include anonymous participation, facilitator-controlled timed phases, duplicate grouping, and AI-powered summaries via LLM Gateway.
 
 ## Tech Stack
 
@@ -10,7 +10,7 @@ A real-time collaborative retrospective board where team members add points, vot
 - **Backend:** Node.js + Express
 - **Real-time:** Socket.IO
 - **Database:** SQLite
-- **LLM:** KPIT LLM Gateway
+- **LLM:** LLM Gateway (OpenAI-compatible)
 
 ## Architecture
 
@@ -174,7 +174,7 @@ Vote count per participant per retro enforced in application logic (max 3).
 
 - Facilitator clicks "Generate Summary" during discussion phase
 - Server collects all cards with vote counts across all 3 columns
-- Sends prompt to KPIT LLM Gateway:
+- Sends prompt to LLM Gateway:
   ```
   Summarize this sprint retrospective in exactly 2 sentences.
   What Went Well: [cards with votes]
@@ -183,7 +183,7 @@ Vote count per participant per retro enforced in application logic (max 3).
   ```
 - Response displayed in AI Summary bar at bottom
 - Can be regenerated
-- KPIT LLM Gateway endpoint and API key are configured via environment variables (`LLM_GATEWAY_URL`, `LLM_API_KEY`)
+- LLM Gateway endpoint and API key are configured via environment variables (`LLM_GATEWAY_URL`, `LLM_API_KEY`)
 
 ## Project Structure
 
@@ -215,7 +215,7 @@ RetrospectiveTool/
       voteHandler.js       # Vote logic with 3-vote limit
       phaseHandler.js      # Phase transitions + timer management
     services/
-      llmService.js        # KPIT LLM Gateway integration
+      llmService.js        # LLM Gateway integration
   package.json             # Root with workspaces or scripts for both
 ```
 

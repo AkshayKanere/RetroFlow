@@ -38,7 +38,7 @@ async function main() {
   console.log('Step 1: Facilitator login');
   const loginRes = await fetchJson(`${SERVER}/api/facilitator/login`, {
     method: 'POST',
-    body: JSON.stringify({ password: 'kpit@111' }),
+    body: JSON.stringify({ password: 'test-password' }),
   });
   assert(!!loginRes.token, 'Facilitator logged in');
   const token = loginRes.token;

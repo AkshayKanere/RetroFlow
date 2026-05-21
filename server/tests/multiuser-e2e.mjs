@@ -1,7 +1,7 @@
 import { io } from '../../client/node_modules/socket.io-client/build/esm-debug/index.js';
 
 const SERVER = 'http://localhost:3001';
-const FACILITATOR_PASSWORD = 'kpit@111';
+const FACILITATOR_PASSWORD = process.env.FACILITATOR_PASSWORD || 'test-password';
 const NUM_USERS = 10;
 const CARDS_PER_USER = 3;
 

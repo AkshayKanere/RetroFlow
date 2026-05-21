@@ -54,7 +54,7 @@
 | # | Test Case | Expected Result | Actual Result | Status |
 |---|-----------|-----------------|---------------|--------|
 | A1 | Navigate to /facilitator | Login form displayed | Login form with password input, Login button, Back to Home link | PASS |
-| A2 | Login with correct password (kpit@111) | Redirect to home page | Redirected to /, token stored in sessionStorage | PASS |
+| A2 | Login with correct password (<facilitator-password>) | Redirect to home page | Redirected to /, token stored in sessionStorage | PASS |
 | A3 | Login with wrong password | Error message displayed | "Invalid password" error shown | PASS |
 | A4 | Facilitator badge visible after login | "Facilitator" badge shown | Badge displayed on home page | PASS |
 
@@ -328,4 +328,4 @@
 - Vote limit enforcement tested with 10 concurrent voters (30 votes + 3 rejections)
 - Full retro lifecycle tested multiple times with consistent results
 - Export tested with 30 cards, 29 votes, 10 participants data
-- AI features tested with real LLM API calls (KPIT LLM Gateway)
+- AI features tested with real LLM API calls (LLM Gateway)

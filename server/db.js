@@ -2,6 +2,7 @@ import initSqlJs from "sql.js";
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
 import path from "path";
+import * as log from "./services/logger.js";
 
 class DbWrapper {
   constructor(sqlDb) {
@@ -104,29 +105,38 @@ export function createSchema(db) {
 }
 
 export async function initDb(buffer) {
+  log.debug('initDb: initializing database', buffer ? '(from buffer)' : '(new)');
   const SQL = await initSqlJs();
   const sqlDb = buffer ? new SQL.Database(buffer) : new SQL.Database();
   const db = new DbWrapper(sqlDb);
   createSchema(db);
+  log.debug('initDb: database ready');
   return db;
 }
 
 export function loadDbFromFile(filepath) {
+  log.debug('loadDbFromFile:', filepath);
   try {
     if (fs.existsSync(filepath)) {
+      log.debug('loadDbFromFile: file found, loading');
       return fs.readFileSync(filepath);
     }
-  } catch (_) {}
+    log.debug('loadDbFromFile: file not found');
+  } catch (_) {
+    log.debug('loadDbFromFile: read error');
+  }
   return null;
 }
 
 export function saveDbToFile(db, filepath) {
+  log.debug('saveDbToFile:', filepath);
   const dir = path.dirname(filepath);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
   const data = db.export();
   fs.writeFileSync(filepath, Buffer.from(data));
+  log.debug('saveDbToFile: saved', data.length, 'bytes');
 }
 
 function generateShareCode() {

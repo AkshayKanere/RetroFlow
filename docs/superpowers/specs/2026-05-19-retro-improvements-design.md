@@ -228,7 +228,7 @@ FACILITATOR_PASSWORD=your-secret-password
 
 Existing (unchanged):
 ```
-LLM_GATEWAY_URL=https://llm-gateway-cv.ai-apps.kpit.com/v1/chat/completions
+LLM_GATEWAY_URL=your-llm-gateway-url-here
 LLM_API_KEY=your-api-key-here
 LLM_MODEL=quick-thinking
 PORT=3001

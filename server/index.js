@@ -77,9 +77,13 @@ async function main() {
 
   async function triggerAutoSummary(retroId) {
     try {
+      log.debug('Attempting auto-summary for retro', retroId);
       const cards = getCards(db, retroId);
       if (cards.length === 0) return;
-      if (!process.env.LLM_GATEWAY_URL || !process.env.LLM_API_KEY) return;
+      if (!process.env.LLM_GATEWAY_URL || !process.env.LLM_API_KEY) {
+        log.debug('Auto-summary skipped: LLM not configured');
+        return;
+      }
       const votes = getVotesForRetro(db, retroId);
       const participants = getParticipants(db, retroId);
       const text = await generateSummary(cards, votes, participants);
@@ -104,6 +108,11 @@ async function main() {
   }
 
   // REST API routes
+
+  app.use((req, res, next) => {
+    log.debug('HTTP', req.method, req.path);
+    next();
+  });
 
   app.post('/api/facilitator/login', (req, res) => {
     const { password } = req.body;
@@ -242,6 +251,7 @@ async function main() {
   // Socket.IO handlers
 
   io.on('connection', (socket) => {
+    log.debug('Socket connected:', socket.id);
     socket.on('join-retro', ({ shareCode, displayName, facilitatorToken }, callback) => {
       if (!checkSocketRate(socketLimiter, socket, callback)) return;
       if (!displayName || typeof displayName !== 'string' || !displayName.trim()) {
@@ -398,6 +408,7 @@ async function main() {
 
     socket.on('start-phase', ({ phase }, callback) => {
       if (!checkSocketRate(socketLimiter, socket, callback)) return;
+      log.debug('start-phase requested:', phase, 'by socket', socket.id);
       const participant = getParticipantBySocket(db, socket.id);
       if (!participant) { if (callback) callback({ error: 'Not in a retro. Please rejoin.' }); return; }
       if (!participant.is_facilitator) {
@@ -428,6 +439,7 @@ async function main() {
 
     socket.on('end-phase', (_, callback) => {
       if (!checkSocketRate(socketLimiter, socket, callback)) return;
+      log.debug('end-phase requested by socket', socket.id);
       const participant = getParticipantBySocket(db, socket.id);
       if (!participant) { if (callback) callback({ error: 'Not in a retro. Please rejoin.' }); return; }
       if (!participant.is_facilitator) {
@@ -549,6 +561,7 @@ async function main() {
     });
 
     socket.on('disconnect', () => {
+      log.debug('Socket disconnected:', socket.id);
       const participant = disconnectParticipantBySocket(db, socket.id);
       if (participant) {
         const participants = getParticipants(db, participant.retro_id);
@@ -563,7 +576,11 @@ async function main() {
   });
 
   const PORT = process.env.PORT || 3001;
-  server.listen(PORT, () => log.info('Server running on port', PORT));
+  server.listen(PORT, () => {
+    log.info('Server running on port', PORT);
+    log.debug('LLM configured:', isLlmConfigured());
+    log.debug('DB path:', dbPath || '(in-memory)');
+  });
 }
 
 main();

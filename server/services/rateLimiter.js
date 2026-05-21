@@ -1,3 +1,5 @@
+import * as log from './logger.js';
+
 export function createRateLimiter(windowMs, maxRequests) {
   const requests = new Map();
 
@@ -30,6 +32,7 @@ export function rateLimitMiddleware(limiter) {
   return (req, res, next) => {
     const key = req.ip || req.connection.remoteAddress;
     if (!limiter(key)) {
+      log.debug('Rate limit hit:', key, req.method, req.path);
       return res.status(429).json({ error: 'Too many requests' });
     }
     next();
@@ -38,6 +41,7 @@ export function rateLimitMiddleware(limiter) {
 
 export function checkSocketRate(limiter, socket, callback) {
   if (!limiter(socket.id)) {
+    log.debug('Rate limit hit for socket:', socket.id);
     if (callback) callback({ error: 'Too many requests' });
     return false;
   }
